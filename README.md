@@ -4,6 +4,8 @@ A [Zed](https://zed.dev)-inspired playground for [Nodepod](https://github.com/Sc
 
 > **Experimental:** Both wZed and [Nodepod](https://github.com/ScelarOrg/Nodepod) are in early development. Expect bugs, missing features, and breaking changes.
 
+> **Disclaimer:** wZed is not affiliated with [Zed Industries](https://zed.dev). This is an independent playground with a Zed-inspired design, built as a frontend for [Nodepod](https://github.com/ScelarOrg/Nodepod).
+
 ![React](https://img.shields.io/badge/React-19.2-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
