@@ -256,6 +256,7 @@ interface WorkspaceState {
   projects: ProjectInfo[];
   templates: TemplateInfo[];
   showHomeScreen: boolean;
+  homeSearch: string;
   pendingTemplateId: string | null;
 
   leftDock: { visible: boolean; width: number; activePanel: PanelKind };
@@ -290,6 +291,7 @@ interface WorkspaceState {
   openProject: (projectId: string) => void;
   openTemplate: (templateId: string) => void;
   goHome: () => void;
+  setHomeSearch: (q: string) => void;
   toggleLeftDock: () => void;
   toggleRightDock: () => void;
   toggleBottomDock: () => void;
@@ -346,6 +348,14 @@ interface WorkspaceState {
 
 const mainPaneId = "pane-1";
 
+function uniqueProjectName(baseName: string, existing: ProjectInfo[]): string {
+  const names = new Set(existing.map((p) => p.name));
+  if (!names.has(baseName)) return baseName;
+  let i = 2;
+  while (names.has(`${baseName} #${i}`)) i++;
+  return `${baseName} #${i}`;
+}
+
 // start empty, hydrate from localStorage on client mount
 const INITIAL_PROJECTS: ProjectInfo[] = [];
 
@@ -361,6 +371,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   projects: INITIAL_PROJECTS,
   templates: INITIAL_TEMPLATES,
   showHomeScreen: true,
+  homeSearch: "",
   pendingTemplateId: null,
 
   leftDock: { visible: true, width: 260, activePanel: "project" },
@@ -466,9 +477,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const template = s.templates.find((t) => t.id === templateId);
     if (!template) return;
     const now = Date.now();
+    const baseName = template.name === "Empty Project" ? "Untitled" : `${template.name} Project`;
     const newProject: ProjectInfo = {
       id: `${template.id}-${now}`,
-      name: template.name === "Empty Project" ? "Untitled" : `${template.name} Project`,
+      name: uniqueProjectName(baseName, s.projects),
       lastOpened: now,
       createdAt: now,
       templateId: template.id,
@@ -516,8 +528,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       });
       saveCurrentSnapshot();
     }
-    set({ showHomeScreen: true });
+    set({ showHomeScreen: true, homeSearch: "" });
   },
+
+  setHomeSearch: (q) => set({ homeSearch: q }),
 
   toggleLeftDock: () => set((s) => ({ leftDock: { ...s.leftDock, visible: !s.leftDock.visible } })),
   toggleRightDock: () => set((s) => ({ rightDock: { ...s.rightDock, visible: !s.rightDock.visible } })),
@@ -1004,7 +1018,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const now = Date.now();
     const newProject: ProjectInfo = {
       id: `shared-${now}`,
-      name,
+      name: uniqueProjectName(name, s.projects),
       lastOpened: now,
       createdAt: now,
       templateId,
@@ -1065,8 +1079,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   renameProject: (projectId, newName) => {
     const s = get();
     if (!newName.trim()) return;
+    const others = s.projects.filter((p) => p.id !== projectId);
+    const finalName = uniqueProjectName(newName.trim(), others);
     const updatedProjects = s.projects.map((p) =>
-      p.id === projectId ? { ...p, name: newName.trim() } : p
+      p.id === projectId ? { ...p, name: finalName } : p
     );
     saveProjects(updatedProjects);
     const updates: Partial<WorkspaceState> = { projects: updatedProjects };

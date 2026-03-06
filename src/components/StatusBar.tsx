@@ -8,6 +8,7 @@ import {
   Sparkles,
   Globe,
 } from "lucide-react";
+import { PerfMonitor } from "./PerfMonitor";
 
 const LANG_DISPLAY: Record<string, string> = {
   rust: "Rust",
@@ -109,6 +110,9 @@ export function StatusBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
+        {/* Performance monitor */}
+        <PerfMonitor />
+
         {/* Language */}
         {activeFileLanguage && (
           <span>{LANG_DISPLAY[activeFileLanguage] || activeFileLanguage}</span>
