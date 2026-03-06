@@ -16,6 +16,7 @@ import {
   Save,
   Share2,
   Check,
+  Search,
 } from "lucide-react";
 import { BugReportModal } from "./BugReportModal";
 import {
@@ -35,6 +36,8 @@ export function TitleBar() {
   const toggleRightDock = useWorkspaceStore((s) => s.toggleRightDock);
   const toggleBottomDock = useWorkspaceStore((s) => s.toggleBottomDock);
   const showHomeScreen = useWorkspaceStore((s) => s.showHomeScreen);
+  const homeSearch = useWorkspaceStore((s) => s.homeSearch);
+  const setHomeSearch = useWorkspaceStore((s) => s.setHomeSearch);
   const currentProject = useWorkspaceStore((s) => s.currentProject);
   const goHome = useWorkspaceStore((s) => s.goHome);
   const activeFileName = useWorkspaceStore((s) => {
@@ -50,6 +53,7 @@ export function TitleBar() {
   const bugReportOpen = useWorkspaceStore((s) => s.bugReportOpen);
   const toggleBugReport = useWorkspaceStore((s) => s.toggleBugReport);
   const saveSnapshot = useNodepodStore((s) => s.saveSnapshot);
+  const dirty = useNodepodStore((s) => s.dirty);
   const getShareUrl = useNodepodStore((s) => s.getShareUrl);
 
   const [saving, setSaving] = useState(false);
@@ -133,10 +137,25 @@ export function TitleBar() {
         )}
       </div>
 
-      {/* Center: Active file name */}
-      <div className="text-[11px] text-t4 font-medium absolute left-1/2 -translate-x-1/2 pointer-events-none">
-        {showHomeScreen ? "" : activeFileName ? `${activeFileName} — wZed` : "wZed"}
-      </div>
+      {/* Center */}
+      {showHomeScreen ? (
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <div className="relative">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-t5" />
+            <input
+              type="text"
+              value={homeSearch}
+              onChange={(e) => setHomeSearch(e.target.value)}
+              placeholder="Search projects..."
+              className="w-[280px] text-[12px] bg-bg1 border border-border rounded-md pl-8 pr-3 py-1 text-t2 placeholder:text-t5 outline-none focus:border-accent transition-colors"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="text-[11px] text-t4 font-medium absolute left-1/2 -translate-x-1/2 pointer-events-none">
+          {activeFileName ? `${activeFileName} — wZed` : "wZed"}
+        </div>
+      )}
 
       {/* Right: Panel toggles + save + user */}
       <div className="flex items-center gap-1">
@@ -186,12 +205,14 @@ export function TitleBar() {
             {/* Save button */}
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !dirty}
               className={cn(
                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors",
                 saving
                   ? "bg-accent/20 text-accent animate-pulse cursor-default"
-                  : "bg-accent/10 text-accent hover:bg-accent/20"
+                  : !dirty
+                    ? "bg-bg2 text-t5 cursor-default"
+                    : "bg-accent/10 text-accent hover:bg-accent/20"
               )}
               title="Save project (Ctrl+S)"
             >

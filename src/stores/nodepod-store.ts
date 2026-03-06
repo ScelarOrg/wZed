@@ -99,6 +99,7 @@ interface NodepodState {
   error: string | null;
   serverPorts: Map<number, string>;
   startupCommand: string | null;
+  dirty: boolean;
 
   boot: (templateId?: string) => Promise<void>;
   teardown: () => void;
@@ -146,6 +147,7 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
   error: null,
   serverPorts: new Map(),
   startupCommand: null,
+  dirty: false,
 
   boot: async (templateId?: string) => {
     if (get().booting) return;
@@ -213,6 +215,7 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
       }
       _vfsWatcher = instance.fs.watch("/project", { recursive: true }, () => {
         _vfsDirty = true;
+        if (!get().dirty) set({ dirty: true });
         if (_refreshTimer) clearTimeout(_refreshTimer);
         _refreshTimer = setTimeout(() => {
           _refreshTimer = null;
@@ -235,13 +238,13 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
       _vfsWatcher.close();
       _vfsWatcher = null;
     }
-    if (_refreshTimer) {
-      clearTimeout(_refreshTimer);
-      _refreshTimer = null;
-    }
     if (_snapshotTimer) {
       clearTimeout(_snapshotTimer);
       _snapshotTimer = null;
+    }
+    if (_refreshTimer) {
+      clearTimeout(_refreshTimer);
+      _refreshTimer = null;
     }
     const instance = get().instance;
     if (instance) {
@@ -254,7 +257,7 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
     _vfsDirty = false;
     _cachedSnapshot = null;
     _lastTreeHash = "";
-    set({ instance: null, serverPorts: new Map(), error: null });
+    set({ instance: null, serverPorts: new Map(), error: null, dirty: false });
   },
 
   refreshFileTree: async () => {
@@ -279,6 +282,7 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
     if (!projectId) return;
     if (!_vfsDirty && _cachedSnapshot) {
       await saveProjectSnapshot(projectId, _cachedSnapshot);
+      set({ dirty: false });
       return;
     }
     try {
@@ -286,6 +290,7 @@ export const useNodepodStore = create<NodepodState>((set, get) => ({
       const snapshot = instance.snapshot();
       _cachedSnapshot = snapshot;
       _vfsDirty = false;
+      set({ dirty: false });
       await saveProjectSnapshot(projectId, snapshot);
     } catch (e) {
       console.error("Failed to save snapshot:", e);
